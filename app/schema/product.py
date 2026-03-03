@@ -192,45 +192,48 @@ class SellerUpdate(BaseModel):
         return value
 
 class ProductUpdate(BaseModel):
-    name:Optional[str] = Field(min_length=3, max_length=60)
-    description:Optional[str] = Field(max_length=200)
+    sku: Optional[str] = Field(min_length=6, max_length=30)
+
+    name: Optional[str] = Field(min_length=3, max_length=60)
+    description: Optional[str] = Field(max_length=200)
     category: Optional[str]
     brand: Optional[str]
-    
+
     price: Optional[float] = Field(gt=0)
     currency: Optional[Literal["INR"]]
-    
+
     discount_percent: Optional[int] = Field(ge=0, le=90)
-    
+
     stock: Optional[int] = Field(ge=0)
     is_active: Optional[bool]
     rating: Optional[float] = Field(ge=0, le=5)
-    
+
     tags: Optional[List[str]] = Field(max_length=10)
-    
     image_urls: Optional[List[AnyUrl]]
-    
-    dimensions_cm : Optional[DimensionsCMUpdate]
+
+    dimensions_cm: Optional[DimensionsCMUpdate]
     seller: Optional[SellerUpdate]
-    created_at: datetime
+    created_at: Optional[datetime]
     
     @field_validator("sku", mode="after")
     @classmethod
-    def validate_sku_formate(cls,value:str):
-        if "-"not in value:
+    def validate_sku_formate(cls, value: Optional[str]):
+        if value is None:
+            return value
+
+        if "-" not in value:
             raise ValueError("Sku must have '-' ")
-        
+
         last = value.split('-')[-1]
-        
+
         if not (len(last) == 3 and last.isdigit()):
             raise ValueError("sku must end with 3 digit sequence -234")
-        
-        
-        return value 
+
+        return value
     
     @model_validator(mode="after")
     @classmethod
-    def validate_buisness_rules(cls, model: "Product"):
+    def validate_buisness_rules(cls, model: "ProductUpdate"):
         if model.stock == 0 and model.is_active is True:
             raise ValueError("If stock is 0, is_active must be false")
         
@@ -241,9 +244,13 @@ class ProductUpdate(BaseModel):
     
     @computed_field
     @property
-    def final_price(self) -> float:
-        return round(self.price * (1 - self.discount_percent / 100), 2)
-    
+    def final_price(self) -> Optional[float]:
+        if self.price is None:
+            return None
+
+        discount = self.discount_percent or 0
+        return round(self.price * (1 - discount / 100), 2)
+
     @computed_field
     @property
     def volume_cm3(self) -> float:
