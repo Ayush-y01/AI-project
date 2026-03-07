@@ -234,12 +234,13 @@ class ProductUpdate(BaseModel):
     @model_validator(mode="after")
     @classmethod
     def validate_buisness_rules(cls, model: "ProductUpdate"):
+    
         if model.stock == 0 and model.is_active is True:
             raise ValueError("If stock is 0, is_active must be false")
-        
-        if model.discount_percent > 0 and model.rating == 0:
-            raise ValueError("disocunted price must have a rating")
-        
+    
+        if model.discount_percent and model.rating == 0:
+            raise ValueError("discounted price must have a rating")
+    
         return model
     
     @computed_field
@@ -253,7 +254,13 @@ class ProductUpdate(BaseModel):
 
     @computed_field
     @property
-    def volume_cm3(self) -> float:
+    def volume_cm3(self) -> Optional[float]:
         d = self.dimensions_cm
-        
+
+        if d is None:
+            return None
+
+        if None in (d.length, d.width, d.height):
+            return None
+
         return round(d.length * d.width * d.height, 2)
