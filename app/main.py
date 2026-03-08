@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query, Path 
 from service.products import get_all_products, add_product ,remove_product, change_product
+from fastapi.responses import JSONResponse
 from schema.product import Product, ProductUpdate
 from uuid import uuid4,UUID
 from datetime import datetime
@@ -106,4 +107,4 @@ payload: ProductUpdate = ...,):
         update_product = change_product(str(product_id), payload.model_dump(mode="json", exclude_unset=True))
         return update_product
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) 
