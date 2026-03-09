@@ -11,9 +11,9 @@ app = FastAPI()
 async def read_root():
     return {"hello": "world"}
 
-# @app.get('/products')
-# def get_product():
-#     return get_all_products() 
+@app.get('/products')
+def get_product():
+    return get_all_products() 
 
 @app.get("/products")
 def list_products(
